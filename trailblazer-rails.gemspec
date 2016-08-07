@@ -5,8 +5,8 @@ require 'trailblazer/rails/version'
 Gem::Specification.new do |spec|
   spec.name          = "trailblazer-rails"
   spec.version       = Trailblazer::Rails::VERSION
-  spec.authors       = ["Nick Sutterer"]
-  spec.email         = ["apotonick@gmail.com"]
+  spec.authors       = ["Nick Sutterer", "Ivan Turkovic"]
+  spec.email         = ["apotonick@gmail.com", 'ivan.turkovic@gmail.com']
 
   spec.summary       = %q{Convenient Rails support for Trailblazer.}
   spec.homepage      = "http://trailblazer.to"

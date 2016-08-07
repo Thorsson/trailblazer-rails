@@ -3,8 +3,48 @@ require "trailblazer/loader"
 
 module Trailblazer
   class Railtie < ::Rails::Railtie
+    CONCEPTS_ROOT = "app/concepts/"
+
     def self.load_concepts(app)
-      Loader.new.(insert: [ModelFile, before: Loader::AddConceptFiles]) { |file| require_dependency("#{app.root}/#{file}") }
+      options = {
+        insert: [ModelFile, before: Loader::AddConceptFiles],
+        concepts_root: CONCEPTS_ROOT
+      }
+
+      Loader.new.(options)  { |file|
+        autoload_file(app, file)
+      }
+    end
+
+    def self.autoload_file(app, file)
+      if file.start_with?(CONCEPTS_ROOT)
+        split_file = file.gsub(CONCEPTS_ROOT, '').gsub(/contracts\/|operations\//, '').split('/')
+        module_list = split_file[0..-2].map(&:camelize)
+        class_string = split_file[-1].gsub('.rb', '').camelize
+
+        get_module(module_list).class_eval do
+          autoload class_string, "#{app.root}/#{file}"
+        end
+      else
+        require_dependency("#{app.root}/#{file}")
+      end
+    end
+
+    def self.get_module(module_list)
+      Kernel.const_get(module_list.join('::'))
+    rescue
+      module_compose = ''
+      module_list.each do |next_module|
+        previous_module = module_compose
+        module_compose << "::#{next_module}"
+        begin
+          Kernel.const_get(module_compose)
+        rescue
+          klass = previous_module.empty? ? Kernel : Kernel.const_get(previous_module)
+          klass.const_set(next_module, Module.new)
+        end
+      end
+      Kernel.const_get(module_list.join('::'))
     end
 
     # This is to autoload Operation::Dispatch, etc. I'm simply assuming people find this helpful in Rails.
